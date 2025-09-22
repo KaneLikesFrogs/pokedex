@@ -1,0 +1,1 @@
+This is a very simple experiment of poking around and manipulating data from an api. The goal of this small project is to be able to recreate something similar in other languages using this as a sort of reference for expected behaviour
