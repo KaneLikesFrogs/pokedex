@@ -65,20 +65,24 @@ def Guess_Prompt(Mon=Pokemon,Level = 0):
         StatNames = []
         StatVals = []
         for x in Mon.stats:
-            #print(x)
             stats = x.split(':')
             StatNames.append(stats[0])
             StatVals.append(int(stats[1]))
         print(f'Its highest stat is {StatNames[StatVals.index(max(StatVals))]}')
         print(f'Its lowest stat is {StatNames[StatVals.index(min(StatVals))]}')
-    if Level == 2:
-        print(f'It is {round(Mon.height,1)}m ({round(Mon.height*3.281,1)}ft) tall and weighs {round(Mon.weight,1)}kg ({round(Mon.weight*2.2046,1)}lbs)')
         if len(Mon.egggroups) > 1:
             print(f'It is a member of the following egg groups :')
             for x in Mon.egggroups:
                 print(x)
         else:
             print(f'It is a member of the {Mon.egggroups[0]} egg group')
+    if Level == 2:
+        if len(Mon.types) > 1:
+            print(f'It is a {Mon.types[0]}-{Mon.types[1]} type')
+        else:
+            print(f'It is a {Mon.types[0]} type')
+        print(f'It is {round(Mon.height,1)}m ({round(Mon.height*3.281,1)}ft) tall and weighs {round(Mon.weight,1)}kg ({round(Mon.weight*2.2046,1)}lbs)')
+
     if Level == 3:
         if len(Mon.abilities) > 1:
             print(f'It has the following abilities:')
@@ -95,7 +99,7 @@ def Guess_Prompt(Mon=Pokemon,Level = 0):
         print(f'You ran out of guesses, the pokemon was {Mon.name}')
 
 
-DexId = random.randint(1,151)
+DexId = random.randint(1,151) #can change these numbers 
 Mon = Pokemon(DexId)
 Level = 0
 guessing = True
