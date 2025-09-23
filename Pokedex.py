@@ -5,16 +5,17 @@ import random
 from PIL import Image
 
 url = "https://pokeapi.co/api/v2/pokemon"
-GenList = ["1-151","152-251","252-386","387-493","494-649","650-721","722-809","810-905","906-1025"]
+GenList = ["1-151","152-251","252-386","387-493","494-649","650-721","722-809","810-905","906-1025"] #note that some of the later generations seems to have info missing that will not return the info necesseary
 
 class Pokemon:
     def __init__(self,id):
         Response = requests.get(f'{url}/{id}')
         if Response.status_code != 200:
             print(f"No Pokémon found (ERROR: {Response.status_code})")
-            return
+            return(ValueError)
         Data = Response.json()
         self.name = Data['name']
+        self.id = Data['id']
         self.weight = Data['weight'] * 0.1
         self.height = Data['height'] * 0.1
         self.img = Data['sprites']['other']['official-artwork']['front_default']
@@ -22,9 +23,6 @@ class Pokemon:
             self.shinyimg = Data['sprites']['other']['official-artwork']['front_shiny']
         except:
             self.shinyimg = "NA"
-
-        self.debut = Data['game_indices'][0]['version']['name']
-        self.encounter = []
 
         self.abilities = []
         for x in Data['abilities']:
@@ -38,11 +36,10 @@ class Pokemon:
         for x in Data['stats']:
             self.stats.append(f'{x['stat']['name']} : {x['base_stat']}')
 
-        Response = requests.get(f'{url}-species/{self.name}')
+        Response = requests.get(f'{url}-species/{self.id}')
         if Response.status_code != 200: #additonal data in species 
-            print("Unable to retrieve species data")
-            self.egggroups = []
-            self.shape = "friend"
+            print(f"Unable to retrieve species data from {url}-species/{self.id}")
+            return(ValueError)
         else:
             SpecData = Response.json()
             self.egggroups = []
@@ -58,6 +55,20 @@ class Pokemon:
                 if x['language']['name'] == 'en':
                     self.entry = x['flavor_text']
                     break #grabs first english entry
+            self.gen = SpecData["generation"]["name"]
+            genurl = SpecData["generation"]["url"]
+            Response = requests.get(f'{genurl}')
+            if Response.status_code != 200:
+                print(f"Unable to retrieve data from {genurl}")
+                return(ValueError)
+            else:
+                GenData = Response.json()
+                GameVers = GenData["version_groups"][0]["name"]
+                GameReg = GenData["main_region"]["name"]
+                self.debut = f"{GameVers} ({GameReg} region)"
+
+
+
 
 def Guess_Prompt(Mon=Pokemon,Level = 0):
     if Level == 0:
@@ -117,8 +128,12 @@ def play_game(Generation):
 
     playing = True
     while playing:
-        DexId = random.randint(Min,Max) 
-        Mon = Pokemon(DexId)
+        DexId = random.randint(Min,Max)
+        try:
+            Mon = Pokemon(DexId)
+        except:
+            print("Failed to find pokemon.")
+            return
         Level = 0
         guessing = True
         while guessing:
@@ -179,6 +194,6 @@ def play_game(Generation):
         if ans.upper() == "N":
             return
 
-play_game(random.randint(1,len(GenList)-1))
+play_game(6)
 
 #play_game(1)
