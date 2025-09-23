@@ -5,12 +5,13 @@ import random
 from PIL import Image
 
 url = "https://pokeapi.co/api/v2/pokemon"
+GenList = ["1-151","152-251","252-386","387-493","494-649","650-721","722-809","810-905","906-1025"]
 
 class Pokemon:
     def __init__(self,id):
         Response = requests.get(f'{url}/{id}')
         if Response.status_code != 200:
-            print(f"No pokemon found (ERROR: {Response.status_code})")
+            print(f"No Pokémon found (ERROR: {Response.status_code})")
             return
         Data = Response.json()
         self.name = Data['name']
@@ -37,8 +38,6 @@ class Pokemon:
         for x in Data['stats']:
             self.stats.append(f'{x['stat']['name']} : {x['base_stat']}')
 
-        
-
         Response = requests.get(f'{url}-species/{self.name}')
         if Response.status_code != 200: #additonal data in species 
             print("Unable to retrieve species data")
@@ -52,6 +51,9 @@ class Pokemon:
             self.shape = SpecData['shape']['name']
             self.color = SpecData['color']['name']
             self.evochain = SpecData['evolution_chain']['url']
+            self.baby = SpecData['is_baby']
+            self.legend = SpecData['is_legendary']
+            self.myth = SpecData['is_mythical']
             for x in SpecData['flavor_text_entries']:
                 if x['language']['name'] == 'en':
                     self.entry = x['flavor_text']
@@ -59,7 +61,7 @@ class Pokemon:
 
 def Guess_Prompt(Mon=Pokemon,Level = 0):
     if Level == 0:
-        print(f'This pokemon first appeared in : Pokemon {Mon.debut}')
+        print(f'This Pokémon first appeared in : Pokémon {Mon.debut}')
         print(f'It is {Mon.shape} shaped and coloured {Mon.color}')
     if Level == 1:
         StatNames = []
@@ -91,49 +93,82 @@ def Guess_Prompt(Mon=Pokemon,Level = 0):
         else:
             print(f'It has the {Mon.abilities[0]} ability')
     if Level == 4:
+        if Mon.baby:
+            print("This Pokémon is a baby")    
+        if Mon.myth:
+            print("This Pokémon is mthical")
+        if Mon.legend:
+            print("This Pokémon is legendary")
         CensorEntry = Mon.entry.lower().replace(Mon.name.lower(),"*"*len(Mon.name))
         CensorEntry = CensorEntry.replace("\n"," ")
         CensorEntry = CensorEntry.replace("\u000c"," ")
         print(f'It has the following dex entry: "{CensorEntry}"')
     if Level > 4:
-        print(f'You ran out of guesses, the pokemon was {Mon.name}')
+        print(f'You ran out of guesses, the Pokémon was {Mon.name}')
 
+# GEN NUMBERS
 
-DexId = random.randint(1,151) #can change these numbers 
-Mon = Pokemon(DexId)
-Level = 0
-guessing = True
-while guessing:
-    Guess_Prompt(Mon,Level)
-    name = input()
-    if name.upper() == Mon.name.upper():
-        print("You got it!")
-        guessing = False
-        ShinyRoll = random.randint(1,4096)
-        if ShinyRoll == 2048:
-            urllib.request.urlretrieve(Mon.shinyimg,f"{Mon.name}Shiny.png")
-            print("You got a shiny!")
-            img = Image.open(f"{Mon.name}Shiny.png")
-            img.show()
-        else:
-            urllib.request.urlretrieve(Mon.img,f"{Mon.name}.png")
-            img = Image.open(f"{Mon.name}.png")
-            img.show()
-        break
-    else:
-        Response = requests.get(f'{url}-species/{name}')
-        if Response.status_code != 200: #additonal data in species 
-            print("Please enter a real Pokemon")
-            continue
-        else:
-            evochain = Response.json()['evolution_chain']['url']
-        if evochain == Mon.evochain:
-            print("Close! It is on the same evolution chain")
-            
-        else: 
-            print("You did not get it")
-            Level += 1
-        
-    if Level > 4:
-        guessing = False
-        print(f"You ran out of guesses, the pokemon was {Mon.name}")
+def play_game(Generation):
+
+    playing = True
+    Min = 1
+    Max = 151
+    while playing:
+        DexId = random.randint(Min,Max) #can change these numbers 
+        Mon = Pokemon(DexId)
+        Level = 0
+        guessing = True
+        while guessing:
+            Guess_Prompt(Mon,Level)
+            name = input()
+            name = name.replace(" ","-")
+            name = name.replace(".","-") #filter for cases where the name is odd (such as mr.mime)
+            if name.lower() == "nidoran":
+                print("Please specify gender of nidoran with -f or -m")
+                name = input()
+            if name.upper() == Mon.name.upper():
+                print("You got it!")
+                guessing = False
+                ShinyRoll = random.randint(1,4096)
+                if ShinyRoll == 2048:
+                    print("You got a shiny!")
+                print("Would you like to add this to your dex? (y/n)")
+                Add = input()
+                if Add.upper() == "N":
+                    break
+                else:
+                    pass
+                if ShinyRoll == 2048:
+                    urllib.request.urlretrieve(Mon.shinyimg,f"{Mon.name}Shiny.png")
+                    print("You got a shiny!")
+                    img = Image.open(f"{Mon.name}Shiny.png")
+                    img.show()
+                else:
+                    urllib.request.urlretrieve(Mon.img,f"{Mon.name}.png")
+                    img = Image.open(f"{Mon.name}.png")
+                    img.show()
+
+                break
+            else:
+                Response = requests.get(f'{url}-species/{name}')
+                if Response.status_code != 200: #additonal data in species 
+                    print("Please enter a real Pokémon")
+                    continue
+                else:
+                    evochain = Response.json()['evolution_chain']['url']
+                if evochain == Mon.evochain:
+                    print("Close! It is on the same evolution chain")
+
+                else: 
+                    print("You did not get it")
+                    Level += 1
+
+            if Level > 4:
+                guessing = False
+                print(f"You ran out of guesses, the Pokémon was {Mon.name}")
+        print("Would you like to play again? (y/n)")
+        ans = input()
+        if ans.upper() == "N":
+            playing == False
+
+play_game(1)
