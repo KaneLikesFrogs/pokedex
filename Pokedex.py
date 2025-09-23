@@ -70,14 +70,19 @@ def Guess_Prompt(Mon=Pokemon,Level = 0):
             stats = x.split(':')
             StatNames.append(stats[0])
             StatVals.append(int(stats[1]))
-        print(f'Its highest stat is {StatNames[StatVals.index(max(StatVals))]}')
         print(f'Its lowest stat is {StatNames[StatVals.index(min(StatVals))]}')
+        print(f'Its highest stat is {StatNames[StatVals.index(max(StatVals))]}')
         if len(Mon.egggroups) > 1:
             print(f'It is a member of the following egg groups :')
             for x in Mon.egggroups:
+                if x == "ground":
+                    x = "field"
                 print(x)
         else:
-            print(f'It is a member of the {Mon.egggroups[0]} egg group')
+            if Mon.egggroups[0] == "ground":
+                print(f'It is a member of the field egg group')
+            else:
+                print(f'It is a member of the {Mon.egggroups[0]} egg group')
     if Level == 2:
         if len(Mon.types) > 1:
             print(f'It is a {Mon.types[0]}-{Mon.types[1]} type')
@@ -106,15 +111,13 @@ def Guess_Prompt(Mon=Pokemon,Level = 0):
     if Level > 4:
         print(f'You ran out of guesses, the Pokémon was {Mon.name}')
 
-# GEN NUMBERS
-
 def play_game(Generation):
+    Min = int(GenList[Generation-1].split("-")[0])
+    Max = int(GenList[Generation-1].split("-")[1])
 
     playing = True
-    Min = 1
-    Max = 151
     while playing:
-        DexId = random.randint(Min,Max) #can change these numbers 
+        DexId = random.randint(Min,Max) 
         Mon = Pokemon(DexId)
         Level = 0
         guessing = True
@@ -129,8 +132,8 @@ def play_game(Generation):
             if name.upper() == Mon.name.upper():
                 print("You got it!")
                 guessing = False
-                ShinyRoll = random.randint(1,4096)
-                if ShinyRoll == 2048:
+                ShinyRoll = random.randint(1,100)
+                if ShinyRoll == 100:
                     print("You got a shiny!")
                 print("Would you like to add this to your dex? (y/n)")
                 Add = input()
@@ -166,9 +169,16 @@ def play_game(Generation):
             if Level > 4:
                 guessing = False
                 print(f"You ran out of guesses, the Pokémon was {Mon.name}")
+
         print("Would you like to play again? (y/n)")
         ans = input()
+        try:
+            ans = ans[0] #in case of user writing "no" instead, likely a good idea to do similar elsewhere
+        except:
+            ans = "N"
         if ans.upper() == "N":
-            playing == False
+            return
 
-play_game(1)
+play_game(random.randint(1,len(GenList)-1))
+
+#play_game(1)
